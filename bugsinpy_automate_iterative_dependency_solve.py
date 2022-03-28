@@ -17,6 +17,7 @@ from dependency_analyzer_utils import DependencyAnalyzerUtils
 from solver_utils import SolverUtils
 from final_outcome import FinalOutcome
 from travis_yml_generator import TravisYMLGenerator
+import import_scanner_utils
 
 
 """ Implementation of IterativeDependencySolver for BugSwarm """
@@ -150,36 +151,59 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
                                             repo_name, str(bug_id), str(version)))
             found_new_patch = False
             curr_patch_str = accepted_patch_str
+
+            print(join(output_log_path, DependencyAnalyzerConstants.PATCH_COMBO_FILE_NAME))
+
+            print("New attempt " + str(iter_count))
+            print("<accepted_patch_str>")
+            print(accepted_patch_str)
+            print("</accepted_patch_str>")
+
             with open(join(output_log_path, DependencyAnalyzerConstants.PATCH_COMBO_FILE_NAME), DependencyAnalyzerConstants.FILE_WRITE_PLUS_MODE) as f:
                 f.write(json.dumps(patches))
-            for patch in patches:
-                exists_in_accepted = False
-                for line in accepted_patch_str.split(DependencyAnalyzerConstants.CHAR_NEW_LINE):
-                    if line.strip().startswith(patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.STR_EQUALS):
-                        exists_in_accepted = True
-                        break
-                if exists_in_accepted:
-                    continue
-                if patch[DependencyAnalyzerConstants.INCLUDED_KEY] or patch[DependencyAnalyzerConstants.APPLIED_KEY]:
-                    continue
-                if len(patch[DependencyAnalyzerConstants.NAME_KEY]) == 0:
-                    curr_patch_str = accepted_patch_str + \
-                        patch[DependencyAnalyzerConstants.NAME_KEY] + \
-                        DependencyAnalyzerConstants.CHAR_NEW_LINE
-                else:
-                    curr_patch_str = accepted_patch_str + patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.STR_EQUALS + \
-                        patch[DependencyAnalyzerConstants.VERSION_KEY] + \
-                        DependencyAnalyzerConstants.CHAR_NEW_LINE
-                patch[DependencyAnalyzerConstants.APPLIED_KEY] = True
-                found_new_patch = True
-                break
-            if not found_new_patch:
-                log_output_content.append(
-                    FinalOutcome.PARTIAL_EXHAUSTED_ALL_OPTIONS)
-                solve_result = FinalOutcome.PARTIAL_EXHAUSTED_ALL_OPTIONS
-                cleanup(component_path, output_log_path,
-                        log_output_content, cloned_repo_dir)
-                break
+
+            need_classical = True
+            if iter_count == 0:
+                import_scanner_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jar " + cloned_repo_dir + " " + output_log_path
+                print(import_scanner_command)
+                process, stdout, stderr, ok = import_scanner_utils._run_command(import_scanner_command)
+                if ok:
+                    need_classical = False
+                    curr_patch_str = open(join(output_log_path, "scanned_dependencies_requirements_without_version.txt")).read()
+
+            if need_classical:
+                for patch in patches:
+                    exists_in_accepted = False
+                    for line in accepted_patch_str.split(DependencyAnalyzerConstants.CHAR_NEW_LINE):
+                        if line.strip().startswith(patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.STR_EQUALS):
+                            exists_in_accepted = True
+                            break
+                    if exists_in_accepted:
+                        continue
+                    if patch[DependencyAnalyzerConstants.INCLUDED_KEY] or patch[DependencyAnalyzerConstants.APPLIED_KEY]:
+                        continue
+                    if len(patch[DependencyAnalyzerConstants.NAME_KEY]) == 0:
+                        curr_patch_str = accepted_patch_str + \
+                            patch[DependencyAnalyzerConstants.NAME_KEY] + \
+                            DependencyAnalyzerConstants.CHAR_NEW_LINE
+                    else:
+                        curr_patch_str = accepted_patch_str + patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.STR_EQUALS + \
+                            patch[DependencyAnalyzerConstants.VERSION_KEY] + \
+                            DependencyAnalyzerConstants.CHAR_NEW_LINE
+                    patch[DependencyAnalyzerConstants.APPLIED_KEY] = True
+                    found_new_patch = True
+                    break
+                if not found_new_patch:
+                    log_output_content.append(
+                        FinalOutcome.PARTIAL_EXHAUSTED_ALL_OPTIONS)
+                    solve_result = FinalOutcome.PARTIAL_EXHAUSTED_ALL_OPTIONS
+                    cleanup(component_path, output_log_path,
+                            log_output_content, cloned_repo_dir)
+                    break
+
+            print("<curr_patch_str>")
+            print(curr_patch_str)
+            print("</curr_patch_str>")
             with open(join(cloned_repo_dir, DependencyAnalyzerConstants.PATCH_DEPENDENCY_FILE_NAME), DependencyAnalyzerConstants.FILE_WRITE_PLUS_MODE) as f:
                 f.write(curr_patch_str)
             with open(join(output_log_path, DependencyAnalyzerConstants.PATCH_DEPENDENCY_FILE_NAME), DependencyAnalyzerConstants.FILE_WRITE_MODE) as f:
@@ -343,6 +367,8 @@ def execute_patch_changes(cloned_repo_dir, curr_errors, log_output_content, outp
     elif python_ver == DependencyAnalyzerConstants.PYTHON_3_6_9:
         image_name = DependencyAnalyzerConstants.PYTHON_3_6_9_IMAGE_NAME
     container_name = '{}_{}_{}'.format(repo_name, bug_id, version)
+    print("image_name " + image_name)
+    print("container_name " + container_name)
     docker_run_cmd = DependencyAnalyzerConstants.DOCKER_RUN_AS_ROOT_CMD.format(
         container_name, image_name)
     _, stdout, stderr, ok = DependencyAnalyzerUtils._run_command(
@@ -373,6 +399,7 @@ def execute_patch_changes(cloned_repo_dir, curr_errors, log_output_content, outp
         change_pip_perm)
     execute_build_cmd = DependencyAnalyzerConstants.DOCKER_EXEC_BUILD_JOB_CMD.format(
         container_id, repo_name)
+    print(execute_build_cmd)
     _, stdout, stderr, ok = DependencyAnalyzerUtils._run_command(
         execute_build_cmd)
     log_cp_cmd = DependencyAnalyzerConstants.DOCKER_CP_BUILD_LOG_CMD.format(

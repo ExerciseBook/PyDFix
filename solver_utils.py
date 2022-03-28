@@ -8,6 +8,14 @@ from packaging.version import parse
 from dependency_analyzer_utils import DependencyAnalyzerUtils
 from dependency_analyzer_const import DependencyAnalyzerConstants
 
+pypiPackageSpecification = {
+    "attr": "attrs",
+    "skimage": "scikit-image",
+    "sklearn": "scikit-learn",
+    "cv2": "opencv-python",
+    "OpenSSL": "pyOpenSSL",
+    "pydispatch": "PyDispatcher",
+}
 
 class SolverUtils:
     @staticmethod
@@ -47,8 +55,8 @@ class SolverUtils:
         for candidate in candidates:
             pin_version = None
             name = candidate['_name']
-            if name == 'attr':
-                name = 'attrs'
+            if name in pypiPackageSpecification:
+                name = pypiPackageSpecification[name]
             if SolverUtils.check_if_patch_exists(patch_combos, name):
                 continue
             constraints = candidate['_version_constraints']

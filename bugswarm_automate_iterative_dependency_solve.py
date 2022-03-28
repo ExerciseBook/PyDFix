@@ -20,6 +20,7 @@ from build_outcome_type import BuildOutcomeType
 from bugswarm.analyzer.analyzer import Analyzer
 from solver_utils import SolverUtils
 from final_outcome import FinalOutcome
+import import_scanner_utils
 
 
 """ Implementation of IterativeDependencySolver for BugSwarm """
@@ -147,49 +148,66 @@ def process_each_artifact_dependency_solve(fix_file_row, artifact_dict, intermed
             found_new_patch = False
             curr_patch_str = accepted_patch_str
 
+            print(join(output_log_path, DependencyAnalyzerConstants.PATCH_COMBO_FILE_NAME))
+
+            print("New attempt " + str(iter_count))
+            print("<accepted_patch_str>")
+            print(accepted_patch_str)
+            print("</accepted_patch_str>")
+
             # write available patch combinations to intermediate directory for record keeping
             with open(join(intermediate_path, artifact[DependencyAnalyzerConstants.IMAGE_TAG_KEY], f_or_p, DependencyAnalyzerConstants.ITER_RUN_DIR_NAME.format(iter_count), DependencyAnalyzerConstants.PATCH_COMBO_FILE_NAME), DependencyAnalyzerConstants.FILE_WRITE_PLUS_MODE) as f:
                 f.write(json.dumps(patches))
             accepted_patch_list = accepted_patch_str.split(DependencyAnalyzerConstants.CHAR_NEW_LINE)
-            
-            # Step6a: Get patch
-            for patch in patches:
-                most_probable_patch = patches[0]
-                if [p for p in accepted_patch_list if p.strip(DependencyAnalyzerConstants.CHAR_NEW_LINE).startswith(patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.STR_EQUALS)]:
-                    if not most_probable_patch[DependencyAnalyzerConstants.APPLIED_KEY] and patch[DependencyAnalyzerConstants.NAME_KEY] == most_probable_patch[DependencyAnalyzerConstants.NAME_KEY] and accepted_patch_list[-1].strip(DependencyAnalyzerConstants.CHAR_NEW_LINE).startswith(patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.STR_EQUALS) and accepted_patch_list[-1].strip(DependencyAnalyzerConstants.CHAR_NEW_LINE).split(DependencyAnalyzerConstants.STR_EQUALS)[-1] != patch[DependencyAnalyzerConstants.VERSION_KEY]:
-                        del accepted_patch_list[-1]
-                        accepted_patch_str = DependencyAnalyzerConstants.CHAR_NEW_LINE.join(accepted_patch_list)
-                    else:
+
+            need_classical = True
+            if iter_count == 0:
+                import_scanner_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jar " + cloned_repo_dir + " " + output_log_path
+                print(import_scanner_command)
+                process, stdout, stderr, ok = import_scanner_utils._run_command(import_scanner_command)
+                if ok:
+                    need_classical = False
+                    curr_patch_str = open(join(output_log_path, "scanned_dependencies_requirements_without_version.txt")).read()
+
+            if need_classical:
+                # Step6a: Get patch
+                for patch in patches:
+                    most_probable_patch = patches[0]
+                    if [p for p in accepted_patch_list if p.strip(DependencyAnalyzerConstants.CHAR_NEW_LINE).startswith(patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.STR_EQUALS)]:
+                        if not most_probable_patch[DependencyAnalyzerConstants.APPLIED_KEY] and patch[DependencyAnalyzerConstants.NAME_KEY] == most_probable_patch[DependencyAnalyzerConstants.NAME_KEY] and accepted_patch_list[-1].strip(DependencyAnalyzerConstants.CHAR_NEW_LINE).startswith(patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.STR_EQUALS) and accepted_patch_list[-1].strip(DependencyAnalyzerConstants.CHAR_NEW_LINE).split(DependencyAnalyzerConstants.STR_EQUALS)[-1] != patch[DependencyAnalyzerConstants.VERSION_KEY]:
+                            del accepted_patch_list[-1]
+                            accepted_patch_str = DependencyAnalyzerConstants.CHAR_NEW_LINE.join(accepted_patch_list)
+                        else:
+                            continue
+                    if patch[DependencyAnalyzerConstants.INCLUDED_KEY] or patch[DependencyAnalyzerConstants.APPLIED_KEY]:
                         continue
-                if patch[DependencyAnalyzerConstants.INCLUDED_KEY] or patch[DependencyAnalyzerConstants.APPLIED_KEY]:
-                    continue
-                if len(patch[DependencyAnalyzerConstants.NAME_KEY]) == 0:
-                    curr_patch_str = accepted_patch_str + patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.CHAR_NEW_LINE
-                else:
-                    curr_patch_str = accepted_patch_str + patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.STR_EQUALS + patch[DependencyAnalyzerConstants.VERSION_KEY] + DependencyAnalyzerConstants.CHAR_NEW_LINE
-                patch[DependencyAnalyzerConstants.APPLIED_KEY] = True
-                found_new_patch = True
-                break
+                    if len(patch[DependencyAnalyzerConstants.NAME_KEY]) == 0:
+                        curr_patch_str = accepted_patch_str + patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.CHAR_NEW_LINE
+                    else:
+                        curr_patch_str = accepted_patch_str + patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.STR_EQUALS + patch[DependencyAnalyzerConstants.VERSION_KEY] + DependencyAnalyzerConstants.CHAR_NEW_LINE
+                    patch[DependencyAnalyzerConstants.APPLIED_KEY] = True
+                    found_new_patch = True
+                    break
 
-            # If no unapplied patches are found
-            if not found_new_patch:
-                use_iter_count = iter_count
-                if iter_count > 0:
-                    use_iter_count = iter_count - 1
+                # If no unapplied patches are found
+                if not found_new_patch:
+                    use_iter_count = iter_count
+                    if iter_count > 0:
+                        use_iter_count = iter_count - 1
 
-                # Check if problem has been solved
-                if check_if_restored_to_original_error(intermediate_path, artifact[DependencyAnalyzerConstants.IMAGE_TAG_KEY], artifact[DependencyAnalyzerConstants.JOB_KEY.format(f_or_p)][DependencyAnalyzerConstants.JOB_ID_KEY], use_iter_count, f_or_p, orig_log_path):
-                    # The current log matches the original log
-                    log_output_content.append(FinalOutcome.SUCCESS_RESTORED_TO_ORIGINAL_STATUS)
-                    solve_result = FinalOutcome.SUCCESS_RESTORED_TO_ORIGINAL_STATUS
-                    analyzer_result = True
-                else:
-                    # The current log does not match the original log
-                    analyzer_result = False
-                    log_output_content.append(FinalOutcome.PARTIAL_EXHAUSTED_ALL_OPTIONS)
-                    solve_result = FinalOutcome.PARTIAL_EXHAUSTED_ALL_OPTIONS
-                cleanup(DependencyAnalyzerConstants.ARTIFACT_DIR.format(artifact[DependencyAnalyzerConstants.IMAGE_TAG_KEY], f_or_p), output_log_path, log_output_content, cloned_repo_dir)
-                break
+                    # Check if problem has been solved
+                    if check_if_restored_to_original_error(intermediate_path, artifact[DependencyAnalyzerConstants.IMAGE_TAG_KEY], artifact[DependencyAnalyzerConstants.JOB_KEY.format(f_or_p)][DependencyAnalyzerConstants.JOB_ID_KEY], use_iter_count, f_or_p, orig_log_path):
+                        # The current log matches the original log
+                        log_output_content.append(FinalOutcome.SUCCESS_RESTORED_TO_ORIGINAL_STATUS)
+                        solve_result = FinalOutcome.SUCCESS_RESTORED_TO_ORIGINAL_STATUS
+                        analyzer_result = True
+                    else:
+                        # The current log does not match the original log
+                        analyzer_result = False
+                        log_output_content.append(FinalOutcome.PARTIAL_EXHAUSTED_ALL_OPTIONS)
+                        solve_result = FinalOutcome.PARTIAL_EXHAUSTED_ALL_OPTIONS
+                    cleanup(DependencyAnalyzerConstants.ARTIFACT_DIR.format(artifact[DependencyAnalyzerConstants.IMAGE_TAG_KEY], f_or_p), output_log_path, log_output_content, cloned_repo_dir)
+                    break
 
             # write current patch to intermediate directory for record keeping
             with open(join(intermediate_path, artifact[DependencyAnalyzerConstants.IMAGE_TAG_KEY], f_or_p, DependencyAnalyzerConstants.ITER_RUN_DIR_NAME.format(iter_count), DependencyAnalyzerConstants.PATCH_DEPENDENCY_FILE_NAME), DependencyAnalyzerConstants.FILE_WRITE_PLUS_MODE) as f:
