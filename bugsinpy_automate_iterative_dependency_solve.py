@@ -187,8 +187,7 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
                             patch[DependencyAnalyzerConstants.NAME_KEY] + \
                             DependencyAnalyzerConstants.CHAR_NEW_LINE
                     else:
-                        curr_patch_str = accepted_patch_str + patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.STR_EQUALS + \
-                            patch[DependencyAnalyzerConstants.VERSION_KEY] + \
+                        curr_patch_str = accepted_patch_str + patch[DependencyAnalyzerConstants.NAME_KEY] + \
                             DependencyAnalyzerConstants.CHAR_NEW_LINE
                     patch[DependencyAnalyzerConstants.APPLIED_KEY] = True
                     found_new_patch = True
