@@ -175,7 +175,8 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
                 for patch in patches:
                     exists_in_accepted = False
                     for line in accepted_patch_str.split(DependencyAnalyzerConstants.CHAR_NEW_LINE):
-                        if line.strip().startswith(patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.STR_EQUALS):
+                        if line.strip().startswith(patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.STR_EQUALS) or \
+                                line.strip() == patch[DependencyAnalyzerConstants.NAME_KEY]:
                             exists_in_accepted = True
                             break
                     if exists_in_accepted:
