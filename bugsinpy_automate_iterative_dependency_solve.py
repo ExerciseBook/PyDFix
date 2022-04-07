@@ -175,9 +175,10 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
                 for patch in patches:
                     exists_in_accepted = False
                     for line in accepted_patch_str.split(DependencyAnalyzerConstants.CHAR_NEW_LINE):
-                        if line.strip().startswith(patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.STR_EQUALS) or \
-                                line.strip().startswith(patch[DependencyAnalyzerConstants.NAME_KEY] + DependencyAnalyzerConstants.STR_LESSER_EQUALS) or \
-                                line.strip() == patch[DependencyAnalyzerConstants.NAME_KEY]:
+                        if \
+                                line.strip().lower().startswith(patch[DependencyAnalyzerConstants.NAME_KEY].lower() + DependencyAnalyzerConstants.STR_EQUALS) or \
+                                line.strip().lower().startswith(patch[DependencyAnalyzerConstants.NAME_KEY].lower() + DependencyAnalyzerConstants.STR_LESSER_EQUALS) or \
+                                line.strip().lower() == patch[DependencyAnalyzerConstants.NAME_KEY].lower():
                             exists_in_accepted = True
                             break
                     if exists_in_accepted:
