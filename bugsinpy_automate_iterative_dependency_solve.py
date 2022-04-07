@@ -164,12 +164,12 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
 
             need_classical = True
             if iter_count == 0:
-                import_scanner_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jar " + cloned_repo_dir + " " + output_log_path
+                import_scanner_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jar scan-project " + cloned_repo_dir + " " + output_log_path
                 print(import_scanner_command)
                 process, stdout, stderr, ok = import_scanner_utils._run_command(import_scanner_command)
                 if ok:
                     need_classical = False
-                    curr_patch_str = open(join(output_log_path, "scanned_dependencies_requirements_without_version.txt")).read()
+                    curr_patch_str = open(join(output_log_path, "scanned_dependencies_requirements_with_version.txt")).read()
 
             if need_classical:
                 for patch in patches:
@@ -188,10 +188,18 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
                             patch[DependencyAnalyzerConstants.NAME_KEY] + \
                             DependencyAnalyzerConstants.CHAR_NEW_LINE
                     else:
-                        curr_patch_str = accepted_patch_str + patch[DependencyAnalyzerConstants.NAME_KEY] + \
-                            DependencyAnalyzerConstants.CHAR_NEW_LINE
-                    patch[DependencyAnalyzerConstants.APPLIED_KEY] = True
-                    found_new_patch = True
+                        package_suggest_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jar check-package " + cloned_repo_dir + " " + patch[DependencyAnalyzerConstants.NAME_KEY] + " " + output_log_path
+                        print(package_suggest_command)
+                        process, stdout, stderr, ok = import_scanner_utils._run_command(package_suggest_command)
+                        if ok:
+                            try:
+                                new_patch = open(join(output_log_path, "suggest_dependency_with_version.txt")).read()
+                                new_patch = new_patch.strip()
+                                curr_patch_str = accepted_patch_str + new_patch + DependencyAnalyzerConstants.CHAR_NEW_LINE
+                                patch[DependencyAnalyzerConstants.APPLIED_KEY] = True
+                                found_new_patch = True
+                            except:
+                                pass
                     break
                 if not found_new_patch:
                     log_output_content.append(
