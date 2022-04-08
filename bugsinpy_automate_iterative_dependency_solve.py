@@ -203,17 +203,51 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
                                 new_patch = new_patch.strip()
                                 curr_patch_str = accepted_patch_str + new_patch + DependencyAnalyzerConstants.CHAR_NEW_LINE
                                 patch[DependencyAnalyzerConstants.APPLIED_KEY] = True
-                                found_new_patch = True
                             except:
-                                pass
-                    break
+                                curr_patch_str = accepted_patch_str + patch[DependencyAnalyzerConstants.NAME_KEY] + \
+                                                 DependencyAnalyzerConstants.STR_EQUALS + \
+                                                 patch[DependencyAnalyzerConstants.VERSION_KEY] + \
+                                                 DependencyAnalyzerConstants.CHAR_NEW_LINE
+                            found_new_patch = True
+                            break
+
                 if not found_new_patch:
-                    log_output_content.append(
-                        FinalOutcome.PARTIAL_EXHAUSTED_ALL_OPTIONS)
-                    solve_result = FinalOutcome.PARTIAL_EXHAUSTED_ALL_OPTIONS
-                    cleanup(component_path, output_log_path,
-                            log_output_content, cloned_repo_dir)
-                    break
+                    # fallback and retry
+                    if iter_count == 1:
+                        patches = pre_prepared_patches
+                        accepted_patch_str = ""
+                        for patch in patches:
+                            if len(patch[DependencyAnalyzerConstants.NAME_KEY]) == 0:
+                                curr_patch_str = accepted_patch_str + \
+                                                 patch[DependencyAnalyzerConstants.NAME_KEY] + \
+                                                 DependencyAnalyzerConstants.CHAR_NEW_LINE
+                            else:
+                                package_suggest_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jar check-package " + cloned_repo_dir + " " + \
+                                                          patch[DependencyAnalyzerConstants.NAME_KEY] + " " + output_log_path
+                                print(package_suggest_command)
+                                process, stdout, stderr, ok = import_scanner_utils._run_command(package_suggest_command)
+                                if ok:
+                                    try:
+                                        new_patch = open(join(output_log_path, "suggest_dependency_with_version.txt")).read()
+                                        new_patch = new_patch.strip()
+                                        curr_patch_str = accepted_patch_str + new_patch + DependencyAnalyzerConstants.CHAR_NEW_LINE
+                                        patch[DependencyAnalyzerConstants.APPLIED_KEY] = True
+                                    except:
+                                        curr_patch_str = accepted_patch_str + \
+                                                         patch[DependencyAnalyzerConstants.NAME_KEY] + \
+                                                         DependencyAnalyzerConstants.STR_EQUALS + \
+                                                         patch[DependencyAnalyzerConstants.VERSION_KEY] + \
+                                                         DependencyAnalyzerConstants.CHAR_NEW_LINE
+                                    found_new_patch = True
+                                    break
+
+                    if not found_new_patch:
+                        log_output_content.append(
+                            FinalOutcome.PARTIAL_EXHAUSTED_ALL_OPTIONS)
+                        solve_result = FinalOutcome.PARTIAL_EXHAUSTED_ALL_OPTIONS
+                        cleanup(component_path, output_log_path,
+                                log_output_content, cloned_repo_dir)
+                        break
 
             print("<curr_patch_str>")
             print(curr_patch_str)
