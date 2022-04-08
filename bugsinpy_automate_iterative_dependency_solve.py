@@ -142,6 +142,7 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
         create_art_dir(intermediate_path, repo_name, bug_id, version)
         patches, log_output_content = SolverUtils.generate_patch_combos(
             possible_candidates, commit_date, repo_name, log_output_content, cloned_repo_dir, dep_files)
+        pre_prepared_patches = patches
         while (run_solver):
             iter_count += 1
             final_iter_count += 1
@@ -172,6 +173,9 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
                     curr_patch_str = open(join(output_log_path, "scanned_dependencies_requirements_with_version.txt")).read()
 
             if need_classical:
+                if iter_count == 1 and not accepted_patch_str:
+                    patches = pre_prepared_patches
+
                 for patch in patches:
                     exists_in_accepted = False
                     for line in accepted_patch_str.split(DependencyAnalyzerConstants.CHAR_NEW_LINE):
