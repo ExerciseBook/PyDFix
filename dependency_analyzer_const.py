@@ -347,11 +347,11 @@ class DependencyAnalyzerConstants:
     PYTHON_3_6_9 = '3.6.9'
 
     # PYTHON DOCKER IMAGE NAMES
-    PYTHON_3_8_3_IMAGE_NAME = 'suchita94/bugsinpy-container-py383:latest'
-    PYTHON_3_8_1_IMAGE_NAME = 'suchita94/bugsinpy-container-py381:latest'
-    PYTHON_3_7_7_IMAGE_NAME = 'suchita94/bugsinpy-container-py377:latest'
-    PYTHON_3_7_0_IMAGE_NAME = 'suchita94/bugsinpy-container-py370:latest'
-    PYTHON_3_6_9_IMAGE_NAME = 'suchita94/bugsinpy-container-py369:latest'
+    PYTHON_3_8_3_IMAGE_NAME = 'ericlianhr/bugsinpy-container-py383:2.0.0'
+    PYTHON_3_8_1_IMAGE_NAME = 'ericlianhr/bugsinpy-container-py381:2.0.0'
+    PYTHON_3_7_7_IMAGE_NAME = 'ericlianhr/bugsinpy-container-py377:2.0.0'
+    PYTHON_3_7_0_IMAGE_NAME = 'ericlianhr/bugsinpy-container-py370:2.0.0'
+    PYTHON_3_6_9_IMAGE_NAME = 'ericlianhr/bugsinpy-container-py369:2.0.0'
 
     # Intermediate log file names
     OUTPUT_LOG = 'output-log.log'
