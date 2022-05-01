@@ -163,9 +163,12 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
             with open(join(output_log_path, DependencyAnalyzerConstants.PATCH_COMBO_FILE_NAME), DependencyAnalyzerConstants.FILE_WRITE_PLUS_MODE) as f:
                 f.write(json.dumps(patches))
 
+            python_ver = get_value_from_info_file(join(component_path, DependencyAnalyzerConstants.PROJECTS_DIR, repo_name, DependencyAnalyzerConstants.BUGS_DIR,
+                                                       bug_id, DependencyAnalyzerConstants.BUG_INFO_FILENM), DependencyAnalyzerConstants.INFO_PYTHON_VERSION)
+
             need_classical = True
             if iter_count == 0:
-                import_scanner_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jar -m scan-project -p " + cloned_repo_dir + " -o " + output_log_path + " -py " + DependencyAnalyzerConstants.INFO_PYTHON_VERSION
+                import_scanner_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jar -m scan-project -p " + cloned_repo_dir + " -o " + output_log_path + " -py " + python_ver
                 print(import_scanner_command)
                 process, stdout, stderr, ok = import_scanner_utils._run_command(import_scanner_command)
                 if ok:
@@ -194,7 +197,7 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
                             patch[DependencyAnalyzerConstants.NAME_KEY] + \
                             DependencyAnalyzerConstants.CHAR_NEW_LINE
                     else:
-                        package_suggest_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jar -m check-package -p " + cloned_repo_dir + " -P " + patch[DependencyAnalyzerConstants.NAME_KEY] + " -o " + output_log_path + " -py " + DependencyAnalyzerConstants.INFO_PYTHON_VERSION
+                        package_suggest_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jar -m check-package -p " + cloned_repo_dir + " -P " + patch[DependencyAnalyzerConstants.NAME_KEY] + " -o " + output_log_path + " -py " + python_ver
                         print(package_suggest_command)
                         process, stdout, stderr, ok = import_scanner_utils._run_command(package_suggest_command)
                         if ok:
@@ -222,7 +225,7 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
                                                  patch[DependencyAnalyzerConstants.NAME_KEY] + \
                                                  DependencyAnalyzerConstants.CHAR_NEW_LINE
                             else:
-                                package_suggest_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jarm -m check-package -p " + cloned_repo_dir + " -P " + patch[DependencyAnalyzerConstants.NAME_KEY] + " -o " + output_log_path + " -py " + DependencyAnalyzerConstants.INFO_PYTHON_VERSION
+                                package_suggest_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jarm -m check-package -p " + cloned_repo_dir + " -P " + patch[DependencyAnalyzerConstants.NAME_KEY] + " -o " + output_log_path + " -py " + python_ver
                                 print(package_suggest_command)
                                 process, stdout, stderr, ok = import_scanner_utils._run_command(package_suggest_command)
                                 if ok:
@@ -255,8 +258,6 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
                 f.write(curr_patch_str)
             with open(join(output_log_path, DependencyAnalyzerConstants.PATCH_DEPENDENCY_FILE_NAME), DependencyAnalyzerConstants.FILE_WRITE_MODE) as f:
                 f.write(curr_patch_str)
-            python_ver = get_value_from_info_file(join(component_path, DependencyAnalyzerConstants.PROJECTS_DIR, repo_name, DependencyAnalyzerConstants.BUGS_DIR,
-                                                       bug_id, DependencyAnalyzerConstants.BUG_INFO_FILENM), DependencyAnalyzerConstants.INFO_PYTHON_VERSION)
             build_outcome, log_output_content = execute_patch_changes(
                 cloned_repo_dir, curr_errors, log_output_content, output_log_path, repo_name, bug_id, version, iter_count, python_ver)
             if not build_outcome:
