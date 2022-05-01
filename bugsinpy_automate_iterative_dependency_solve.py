@@ -165,7 +165,7 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
 
             need_classical = True
             if iter_count == 0:
-                import_scanner_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jar scan-project " + cloned_repo_dir + " " + output_log_path
+                import_scanner_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jar -m scan-project -p " + cloned_repo_dir + " -o " + output_log_path + " -py " + DependencyAnalyzerConstants.INFO_PYTHON_VERSION
                 print(import_scanner_command)
                 process, stdout, stderr, ok = import_scanner_utils._run_command(import_scanner_command)
                 if ok:
@@ -194,7 +194,7 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
                             patch[DependencyAnalyzerConstants.NAME_KEY] + \
                             DependencyAnalyzerConstants.CHAR_NEW_LINE
                     else:
-                        package_suggest_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jar check-package " + cloned_repo_dir + " " + patch[DependencyAnalyzerConstants.NAME_KEY] + " " + output_log_path
+                        package_suggest_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jar -m check-package -p " + cloned_repo_dir + " -P " + patch[DependencyAnalyzerConstants.NAME_KEY] + " -o " + output_log_path + " -py " + DependencyAnalyzerConstants.INFO_PYTHON_VERSION
                         print(package_suggest_command)
                         process, stdout, stderr, ok = import_scanner_utils._run_command(package_suggest_command)
                         if ok:
@@ -222,8 +222,7 @@ def process_each_artifact_dependency_solve(fix_file_row, component_path, interme
                                                  patch[DependencyAnalyzerConstants.NAME_KEY] + \
                                                  DependencyAnalyzerConstants.CHAR_NEW_LINE
                             else:
-                                package_suggest_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jar check-package " + cloned_repo_dir + " " + \
-                                                          patch[DependencyAnalyzerConstants.NAME_KEY] + " " + output_log_path
+                                package_suggest_command = "java -jar /home/pydfix/PythonDependencyFix/import-scanner/build/libs/import-scanner-1.0-SNAPSHOT-all.jarm -m check-package -p " + cloned_repo_dir + " -P " + patch[DependencyAnalyzerConstants.NAME_KEY] + " -o " + output_log_path + " -py " + DependencyAnalyzerConstants.INFO_PYTHON_VERSION
                                 print(package_suggest_command)
                                 process, stdout, stderr, ok = import_scanner_utils._run_command(package_suggest_command)
                                 if ok:
